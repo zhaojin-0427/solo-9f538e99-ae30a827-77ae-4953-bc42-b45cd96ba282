@@ -1,0 +1,6 @@
+rec_id,device_a,device_b,low_sec,high_sec
+1,S,C1,0,10
+2,S,C2,-5,5
+3,S,C3,100,200
+4,S,R,0,100
+5,R,C2,-10,10

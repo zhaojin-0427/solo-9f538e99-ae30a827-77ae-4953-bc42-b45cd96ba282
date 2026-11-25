@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}数据导入{% endblock %}
+{% block content %}
+<h2>首次导入：三份 CSV</h2>
+{% if loaded %}
+  <p class="warn">本季数据已导入。重复导入会被拒绝；钟差修正请使用 <a href="{{ url_for('main.clocks_page') }}">逐条更正</a>。</p>
+{% endif %}
+{% if error %}<div class="error">导入失败（已回滚，无残留数据）：{{ error }}</div>{% endif %}
+{% if result %}
+  <div class="ok">导入成功（事件 #{{ result.event_id }}）：
+    峰 {{ result.peaks }} 条、作业区间 {{ result.work_intervals }} 条、
+    吊机 {{ result.cranes|join('、') }}、钟差记录 {{ result.clock_records }} 条。
+  </div>
+{% endif %}
+<form method="post" enctype="multipart/form-data" class="card">
+  <label>声级仪噪声峰 CSV（列：peak_id, peak_sec）
+    <input type="file" name="peaks" accept=".csv" required>
+  </label>
+  <label>吊机作业区间 CSV（列：crane_id, start_sec, end_sec；含首不含尾；至多 12 台吊机）
+    <input type="file" name="work" accept=".csv" required>
+  </label>
+  <label>设备间钟差 CSV（列：rec_id, device_a, device_b, low_sec, high_sec；后者减前者）
+    <input type="file" name="clocks" accept=".csv" required>
+  </label>
+  <button type="submit">导入本季数据</button>
+</form>
+{% endblock %}

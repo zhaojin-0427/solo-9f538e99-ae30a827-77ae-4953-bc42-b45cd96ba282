@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}峰查询{% endblock %}
+{% block content %}
+<h2>噪声峰查询与签发</h2>
+<form method="get" action="{{ url_for('main.peaks_page') }}" class="inline">
+  <input type="text" name="q" value="{{ q }}" placeholder="输入峰号，如 P001" size="24">
+  <button type="submit">查询</button>
+</form>
+{% if q %}
+  <p><a href="{{ url_for('main.peak_detail_page', peak_id=q) }}">打开峰 {{ q }} 的核定页 →</a></p>
+{% endif %}
+<h3>本季峰清单（前 200 条）</h3>
+<table>
+  <thead><tr><th>峰号</th><th>声级仪时刻（秒）</th><th></th></tr></thead>
+  <tbody>
+  {% for p in peaks %}
+    <tr>
+      <td>{{ p.peak_id }}</td>
+      <td>{{ p.peak_sec }}</td>
+      <td><a href="{{ url_for('main.peak_detail_page', peak_id=p.peak_id) }}">核定</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

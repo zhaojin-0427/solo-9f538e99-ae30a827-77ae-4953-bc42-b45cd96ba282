@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}峰 {{ peak.peak_id }}{% endblock %}
+{% block content %}
+<h2>峰 {{ peak.peak_id }} <small>声级仪时刻 t = {{ peak.peak_sec }} 秒</small></h2>
+
+{% if conflict %}
+  <div class="error">当前钟差系统无解（存在负环），涉及冲突记录编号：
+    <strong>{{ conflict | join('、') }}</strong>。请先更正钟差；数据与已发复核单保持原样。</div>
+{% else %}
+  {% set d = determination %}
+  {% if d.result == 'issue' %}
+    <div class="ok">核定结论：全部可行对时下均为吊机
+      <strong>{{ d.crane }}</strong> 同一班组作业，可签发复核单。</div>
+  {% else %}
+    <div class="warn">核定结论：<strong>待核</strong>。{{ d.reason }}</div>
+  {% endif %}
+
+  <h3>各吊机对时窗口（吊机钟面时刻 = t + 偏移）</h3>
+  <table>
+    <thead><tr><th>吊机</th><th>可行偏移区间</th><th>峰在吊机钟面的时刻窗口</th><th>作业判定</th></tr></thead>
+    <tbody>
+    {% for c, w in d.windows.items() %}
+      <tr>
+        <td>{{ c }}</td>
+        <td>{% if w.lo is none %}—{% else %}[{{ w.lo }}, {{ w.hi }}]{% endif %}</td>
+        <td>{% if w.win_lo is undefined or w.win_lo is none %}—{% else %}[{{ w.win_lo }}, {{ w.win_hi }}]{% endif %}</td>
+        <td>
+          {% if w.classification == 'always' %}<span class="tag ok">窗口内始终作业</span>
+          {% elif w.classification == 'never' %}<span class="tag">窗口内始终未作业</span>
+          {% elif w.classification == 'unreachable' %}<span class="tag warn">无法连通声级仪</span>
+          {% else %}<span class="tag warn">随对时变化</span>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <button id="issue-btn" {% if d.result != 'issue' %}disabled{% endif %}>签发复核单给 {{ d.crane }} 班组</button>
+  <pre id="issue-out"></pre>
+  <script>
+  document.getElementById('issue-btn')?.addEventListener('click', async () => {
+    const out = document.getElementById('issue-out');
+    const resp = await fetch('{{ url_for("main.api_issue_form") }}', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({peak_id: {{ peak.peak_id | tojson }}})
+    });
+    const data = await resp.json();
+    out.textContent = JSON.stringify(data, null, 2);
+    if (resp.ok) setTimeout(() => location.reload(), 800);
+  });
+  </script>
+{% endif %}
+
+<h3>该峰的复核单历史</h3>
+{% if forms %}
+<table>
+  <thead><tr><th>单号</th><th>班组</th><th>状态</th><th>签发事件</th><th>撤销事件/原因</th></tr></thead>
+  <tbody>
+  {% for f in forms %}
+    <tr>
+      <td><a href="{{ url_for('main.form_detail_page', form_no=f.form_no) }}">{{ f.form_no }}</a></td>
+      <td>{{ f.crane_id }}</td>
+      <td>{% if f.status == 'active' %}<span class="tag ok">有效</span>{% else %}<span class="tag warn">已撤销</span>{% endif %}</td>
+      <td>#{{ f.created_event }}</td>
+      <td>{% if f.revoked_event %}#{{ f.revoked_event }}：{{ f.revoke_reason }}{% else %}—{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p>暂无复核单。</p>{% endif %}
+{% endblock %}

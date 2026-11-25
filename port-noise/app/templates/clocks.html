@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}钟差记录与更正{% endblock %}
+{% block content %}
+<h2>钟差记录（逐条更正）</h2>
+<p>语义：<code>low ≤ clock(b) − clock(a) ≤ high</code>，整数秒；设备偏移整季固定。
+更正若导致无解，系统返回一组冲突记录且<strong>不改动任何数据/复核单</strong>。</p>
+<table>
+  <thead><tr><th>记录号</th><th>设备 A</th><th>设备 B</th><th>下界(秒)</th><th>上界(秒)</th><th>状态</th><th>更正</th></tr></thead>
+  <tbody>
+  {% for r in records %}
+    <tr class="{{ 'inactive' if not r.active }}">
+      <td>{{ r.rec_id }}</td>
+      <td>{{ r.device_a }}</td>
+      <td>{{ r.device_b }}</td>
+      <td>{{ r.low_sec }}</td>
+      <td>{{ r.high_sec }}</td>
+      <td>
+        {% if r.active %}<span class="tag ok">有效</span>
+        {% else %}<span class="tag warn">已被事件 #{{ r.superseded_by }} 更正</span>{% endif %}
+      </td>
+      <td>
+        {% if r.active %}
+        <form class="inline correct-form" data-rec="{{ r.rec_id }}">
+          <input type="number" name="low_sec" value="{{ r.low_sec }}" required style="width:7em">
+          <input type="number" name="high_sec" value="{{ r.high_sec }}" required style="width:7em">
+          <button type="submit">更正</button>
+        </form>
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<pre id="correct-out"></pre>
+<script>
+document.querySelectorAll('.correct-form').forEach(form => {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const recId = form.dataset.rec;
+    const payload = {
+      low_sec: parseInt(form.low_sec.value, 10),
+      high_sec: parseInt(form.high_sec.value, 10),
+    };
+    const resp = await fetch(`/api/clock-records/${recId}/correct`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    document.getElementById('correct-out').textContent = JSON.stringify(data, null, 2);
+    if (resp.ok) setTimeout(() => location.reload(), 1000);
+  });
+});
+</script>
+{% endblock %}

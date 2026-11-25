@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}复核单{% endblock %}
+{% block content %}
+<h2>复核单</h2>
+<p>
+  <a href="{{ url_for('main.forms_page') }}">全部</a> ·
+  <a href="{{ url_for('main.forms_page', status='active') }}">有效</a> ·
+  <a href="{{ url_for('main.forms_page', status='revoked') }}">已撤销</a>
+</p>
+<table>
+  <thead><tr><th>单号</th><th>峰号</th><th>班组</th><th>状态</th><th>签发事件</th><th>撤销事件</th></tr></thead>
+  <tbody>
+  {% for f in forms %}
+    <tr>
+      <td><a href="{{ url_for('main.form_detail_page', form_no=f.form_no) }}">{{ f.form_no }}</a></td>
+      <td><a href="{{ url_for('main.peak_detail_page', peak_id=f.peak_id) }}">{{ f.peak_id }}</a></td>
+      <td>{{ f.crane_id }}</td>
+      <td>{% if f.status == 'active' %}<span class="tag ok">有效</span>{% else %}<span class="tag warn">已撤销</span>{% endif %}</td>
+      <td>#{{ f.created_event }}</td>
+      <td>{% if f.revoked_event %}#{{ f.revoked_event }}{% else %}—{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}夜间噪声峰复核{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <h1>码头夜间噪声峰复核系统</h1>
+  <nav>
+    <a href="{{ url_for('main.index') }}">总览</a>
+    <a href="{{ url_for('main.upload_page') }}">数据导入</a>
+    <a href="{{ url_for('main.peaks_page') }}">峰查询</a>
+    <a href="{{ url_for('main.clocks_page') }}">钟差记录/更正</a>
+    <a href="{{ url_for('main.forms_page') }}">复核单</a>
+    <a href="{{ url_for('main.events_page') }}">事件流水</a>
+  </nav>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>整季数据存于 SQLite · 钟差为整数秒 · 作业区间含首不含尾</footer>
+</body>
+</html>

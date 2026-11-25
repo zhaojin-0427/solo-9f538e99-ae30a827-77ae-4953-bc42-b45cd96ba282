@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}复核单 {{ form.form_no }}{% endblock %}
+{% block content %}
+<h2>复核单 {{ form.form_no }}</h2>
+<table class="kv">
+  <tr><th>峰号</th><td><a href="{{ url_for('main.peak_detail_page', peak_id=form.peak_id) }}">{{ form.peak_id }}</a>（t={{ peak.peak_sec }} 秒）</td></tr>
+  <tr><th>签发给班组</th><td>{{ form.crane_id }}</td></tr>
+  <tr><th>状态</th><td>
+    {% if form.status == 'active' %}<span class="tag ok">有效</span>{% else %}<span class="tag warn">已撤销（不恢复）</span>{% endif %}
+  </td></tr>
+  <tr><th>签发事件</th><td>#{{ form.created_event }}</td></tr>
+  <tr><th>撤销事件</th><td>{% if form.revoked_event %}#{{ form.revoked_event }}：{{ form.revoke_reason }}{% else %}—{% endif %}</td></tr>
+</table>
+
+{% if recheck %}
+  <h3>当前口径复核（按最新有效钟差重新判定）</h3>
+  {% if recheck.conflict %}
+    <div class="error">当前钟差无解，冲突记录：{{ recheck.conflict | join('、') }}</div>
+  {% elif recheck.determination.result == 'issue' %}
+    <p>当前该峰归属吊机 <strong>{{ recheck.determination.crane }}</strong>。
+    {% if form.status == 'revoked' %}即使与旧单归属相同，旧单也<strong>不会恢复</strong>；如需单据请重新签发（生成新单号）。{% endif %}</p>
+  {% else %}
+    <p class="warn">当前该峰为待核：{{ recheck.determination.reason }}</p>
+  {% endif %}
+{% endif %}
+
+<h3>相关事件</h3>
+<ul>
+{% for e in events %}
+  <li>#{{ e.id }} {{ e.kind }} — {{ e.detail }}</li>
+{% endfor %}
+</ul>
+{% endblock %}
